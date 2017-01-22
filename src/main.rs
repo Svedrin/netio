@@ -41,7 +41,10 @@ fn print_error(message: String, err: Error){
 
 
 fn run_as_server(once:bool){
-    let listener = TcpListener::bind(":::55455").unwrap();
+    let listener = match TcpListener::bind(":::55455") {
+        Ok(listener) => listener,
+        Err(err)     => return print_error(String::from("Could not start server:"), err)
+    };
 
     println!("TCP server listening.");
 
@@ -49,7 +52,10 @@ fn run_as_server(once:bool){
     for stream in listener.incoming() {
         match stream {
             Ok(stream) => {
-                println!("New connection from {:?}.", stream.peer_addr().unwrap());
+                match stream.peer_addr() {
+                    Ok(addr) => println!("New connection from {:?}.", addr),
+                    Err(_)   => ()
+                }
                 match run_benchmark(stream, State::Receiver, State::Sender) {
                     Ok(_)    => {
                         println!("Test finished.");
