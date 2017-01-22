@@ -151,7 +151,7 @@ fn main() {
             .long("one-shot")
             .help("Run in server mode, only once"))
         .arg(Arg::with_name("server-addr")
-            .help("the server to connect to")
+            .help("the server to connect to (client mode only)")
             .index(1))
         .get_matches();
 
