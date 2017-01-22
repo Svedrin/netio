@@ -1,0 +1,6 @@
+[package]
+name = "netio"
+version = "0.1.0"
+authors = ["Michael Ziegler <diese-addy@funzt-halt.net>"]
+
+[dependencies]
