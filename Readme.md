@@ -15,6 +15,7 @@ And because I wanted to take a look at [Rust](rust-lang.org) anyway, I thought I
 * No dependencies
 * IPv6 ready
 * Tests with extremely small packets (like those of an SSH connection when someone's *extremely* good at typing)
+* binaries for Windows and Linux available
 
 # Installation #
 
