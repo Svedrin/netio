@@ -53,6 +53,7 @@ Packet size  1492 bytes:    9.38 GBit/s Tx        9.40 GBit/s Rx
 Packet size  1500 bytes:    9.38 GBit/s Tx        9.39 GBit/s Rx
 Packet size  2048 bytes:    9.38 GBit/s Tx        9.40 GBit/s Rx
 Packet size 16384 bytes:    9.39 GBit/s Tx        9.40 GBit/s Rx
+Test finished.
 ```
 
 # Building from Source #
