@@ -57,13 +57,11 @@ fn run_as_server(once:bool){
                     Err(_)   => ()
                 }
                 match run_benchmark(stream, State::Receiver, State::Sender) {
-                    Ok(_)    => {
-                        println!("Test finished.");
-                        if once {
-                            return;
-                        }
-                    },
+                    Ok(_)    => println!("Test finished."),
                     Err(err) => print_error(String::from("Benchmark run failed:"), err)
+                }
+                if once {
+                    return;
                 }
             }
             Err(err) => print_error(String::from("Could not accept client connection:"), err)
