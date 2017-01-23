@@ -2,6 +2,7 @@
 
 use std::io::prelude::*;
 use std::io::Error;
+use std::io::stdout;
 use std::net::{TcpListener, TcpStream};
 use std::time::{Duration, Instant};
 
@@ -43,7 +44,7 @@ fn print_error(message: String, err: Error){
 fn run_as_server(once:bool){
     let listener = match TcpListener::bind(":::55455") {
         Ok(listener) => listener,
-        Err(err)     => return print_error(String::from("Could not start server:"), err)
+        Err(err)     => return print_error(String::from("Could not start server"), err)
     };
 
     println!("TCP server listening.");
@@ -56,15 +57,17 @@ fn run_as_server(once:bool){
                     Ok(addr) => println!("New connection from {:?}.", addr),
                     Err(_)   => ()
                 }
+                println!();
                 match run_benchmark(stream, State::Receiver, State::Sender) {
                     Ok(_)    => println!("Test finished."),
-                    Err(err) => print_error(String::from("Benchmark run failed:"), err)
+                    Err(err) => print_error(String::from("Benchmark run aborted"), err)
                 }
+                println!();
                 if once {
                     return;
                 }
             }
-            Err(err) => print_error(String::from("Could not accept client connection:"), err)
+            Err(err) => print_error(String::from("Could not accept client connection"), err)
         }
     }
 }
@@ -72,16 +75,18 @@ fn run_as_server(once:bool){
 fn run_as_client(server_addr: String){
     let stream = match TcpStream::connect((server_addr.as_str(), 55455)) {
         Ok(stream) => stream,
-        Err(err)   => return print_error(String::from("Could not connect to server:"), err)
+        Err(err)   => return print_error(String::from("Could not connect to server"), err)
     };
     match stream.peer_addr() {
         Ok(addr) => println!("Connected to {:?}.", addr),
         Err(_)   => ()
     }
+    println!();
     match run_benchmark(stream, State::Sender, State::Receiver) {
         Ok(_)    => println!("Test finished."),
-        Err(err) => print_error(String::from("Benchmark run failed:"), err)
+        Err(err) => print_error(String::from("Benchmark run aborted"), err)
     }
+    println!();
 }
 
 
@@ -92,7 +97,8 @@ fn run_benchmark(mut stream: TcpStream, phase1: State, phase2: State) -> Result<
     // Packet size  1k bytes:  2293.17 KByte/s Tx,  2354.97 KByte/s Rx.
 
     for cur_size in pkt_sizes.iter() {
-        print!("Packet size {:>5} bytes:", cur_size);
+        print!("Packet size {:>5} bytes:   ", cur_size);
+        let _ = stdout().flush();
 
         for cur_state in [phase1, phase2].iter() {
             let until = Instant::now() + test_duration;
@@ -112,25 +118,25 @@ fn run_benchmark(mut stream: TcpStream, phase1: State, phase2: State) -> Result<
                             Err(err) => return Err(err)
                         }
                         match stream.flush() {
-                            Ok(_)  => (),
+                            Ok(_)    => (),
                             Err(err) => return Err(err)
                         }
                     }
 
                     print_rate(transferred_data, test_duration, String::from("Tx    "));
+                    let _ = stdout().flush();
                 },
                 &State::Receiver => {
                     let _ = stream.set_read_timeout(Some(Duration::new(1, 0)));
                     while Instant::now() < until {
                         match stream.read(&mut [0; 16384]) {
-                            Ok(res)  => {
-                                transferred_data += res as u64;
-                            },
+                            Ok(res)  => transferred_data += res as u64,
                             Err(err) => return Err(err)
                         }
                     }
 
                     print_rate(transferred_data, test_duration, String::from("Rx    "));
+                    let _ = stdout().flush();
                 }
             }
         }
@@ -143,7 +149,7 @@ fn run_benchmark(mut stream: TcpStream, phase1: State, phase2: State) -> Result<
 
 fn main() {
     let matches = App::new("netio")
-        .version("0.1.0")
+        .version("0.2.0")
         .author("Michael Ziegler <diese-addy@funzt-halt.net>")
         .about("network throughput benchmark")
         .arg(Arg::with_name("server-mode")
