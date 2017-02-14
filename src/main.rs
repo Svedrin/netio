@@ -94,11 +94,11 @@ fn run_benchmark(mut stream: TcpStream, phase1: State, phase2: State) -> Result<
     let pkt_sizes : [usize; 7] = [32, 64, 1024, 1492, 1500, 2048, 16384];
     let test_duration = Duration::new(5, 0);
 
-    try!(stream.set_nodelay(true));
-
     // Packet size  1k bytes:  2293.17 KByte/s Tx,  2354.97 KByte/s Rx.
 
     for cur_size in pkt_sizes.iter() {
+        try!(stream.set_nodelay(*cur_size < 1000));
+
         print!("Packet size {:>5} bytes:   ", cur_size);
         try!(stdout().flush());
 
