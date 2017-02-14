@@ -176,7 +176,7 @@ fn run_benchmark(mut stream: TcpStream, phase1: State, phase2: State) -> Result<
 
 fn main() {
     let matches = App::new("netio")
-        .version("0.3.0")
+        .version("0.3.1")
         .author("Michael Ziegler <diese-addy@funzt-halt.net>")
         .about("network throughput benchmark")
         .arg(Arg::with_name("server-mode")
