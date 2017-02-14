@@ -1,7 +1,7 @@
 #[deny(warnings)]
 
 use std::io::prelude::*;
-use std::io::Error;
+use std::io::{Error, ErrorKind};
 use std::io::stdout;
 use std::net::{TcpListener, TcpStream};
 use std::time::{Duration, Instant};
@@ -119,7 +119,12 @@ fn run_benchmark(mut stream: TcpStream, phase1: State, phase2: State) -> Result<
                     while Instant::now() < until {
                         match stream.write(random_data.as_bytes()) {
                             Ok(res)  => transferred_data += res as u64,
-                            Err(err) => return Err(err)
+                            Err(err) => {
+                                // "Resource temporarily not available" can happen, ignore
+                                if err.kind() != ErrorKind::WouldBlock {
+                                    return Err(err)
+                                }
+                            }
                         }
                         try!(stdout().flush());
                     }
@@ -136,7 +141,12 @@ fn run_benchmark(mut stream: TcpStream, phase1: State, phase2: State) -> Result<
                     while Instant::now() < until {
                         match stream.read(&mut [0; 16384]) {
                             Ok(res)  => transferred_data += res as u64,
-                            Err(err) => return Err(err)
+                            Err(err) => {
+                                // "Resource temporarily not available" can happen, ignore
+                                if err.kind() != ErrorKind::WouldBlock {
+                                    return Err(err)
+                                }
+                            }
                         }
                     }
 
