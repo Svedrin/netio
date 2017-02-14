@@ -61,5 +61,6 @@ Test finished.
 
 ```
 hg clone https://bitbucket.org/Svedrin/netio
+cd netio
 cargo build
 ```
