@@ -20,7 +20,7 @@ And because I wanted to take a look at [Rust](rust-lang.org) anyway, I thought I
 # Installation #
 
 ```
-wget -O /usr/local/bin/netio https://bitbucket.org/Svedrin/netio/downloads/netio_linux_amd64.bin
+wget -O /usr/local/bin/netio https://bitbucket.org/Svedrin/netio/downloads/netio
 chmod +x /usr/local/bin/netio
 ```
 
