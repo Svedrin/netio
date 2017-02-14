@@ -100,7 +100,7 @@ fn run_benchmark(mut stream: TcpStream, phase1: State, phase2: State) -> Result<
 
     for cur_size in pkt_sizes.iter() {
         print!("Packet size {:>5} bytes:   ", cur_size);
-        let _ = stdout().flush();
+        try!(stdout().flush());
 
         for cur_state in [phase1, phase2].iter() {
             let until = Instant::now() + test_duration;
@@ -109,6 +109,8 @@ fn run_benchmark(mut stream: TcpStream, phase1: State, phase2: State) -> Result<
 
             match cur_state {
                 &State::Sender =>  {
+                    try!(stream.set_read_timeout(None));
+
                     let random_data = rand::thread_rng()
                         .gen_ascii_chars()
                         .take(*cur_size)
@@ -126,10 +128,14 @@ fn run_benchmark(mut stream: TcpStream, phase1: State, phase2: State) -> Result<
                     }
 
                     print_rate(transferred_data, test_duration, String::from("Tx    "));
-                    let _ = stdout().flush();
+                    try!(stdout().flush());
+
+                    // wait for the "done" response from peer
+                    try!(stream.read(&mut [0; 16384]));
                 },
                 &State::Receiver => {
-                    let _ = stream.set_read_timeout(Some(Duration::new(1, 0)));
+                    try!(stream.set_read_timeout(Some(Duration::new(1, 0))));
+
                     while Instant::now() < until {
                         match stream.read(&mut [0; 16384]) {
                             Ok(res)  => transferred_data += res as u64,
@@ -138,7 +144,19 @@ fn run_benchmark(mut stream: TcpStream, phase1: State, phase2: State) -> Result<
                     }
 
                     print_rate(transferred_data, test_duration, String::from("Rx    "));
-                    let _ = stdout().flush();
+                    try!(stdout().flush());
+
+                    // There may be some data still left in transit, so read() until there's nothing left
+                    // and then tell the sender we're done
+
+                    loop {
+                        match stream.read(&mut [0; 16384]) {
+                            Ok(_)  => (),
+                            Err(_) => break
+                        }
+                    }
+
+                    try!(stream.write("done".as_bytes()));
                 }
             }
         }
