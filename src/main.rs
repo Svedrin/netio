@@ -121,10 +121,7 @@ fn run_benchmark(mut stream: TcpStream, phase1: State, phase2: State) -> Result<
                             Ok(res)  => transferred_data += res as u64,
                             Err(err) => return Err(err)
                         }
-                        match stream.flush() {
-                            Ok(_)    => (),
-                            Err(err) => return Err(err)
-                        }
+                        try!(stdout().flush());
                     }
 
                     print_rate(transferred_data, test_duration, String::from("Tx    "));
