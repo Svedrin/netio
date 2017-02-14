@@ -57,6 +57,10 @@ Packet size 16384 bytes:    9.39 GBit/s Tx        9.40 GBit/s Rx
 Test finished.
 ```
 
+# Firewalls #
+
+Netio uses TCP port 55455.
+
 # Building from Source #
 
 ```
