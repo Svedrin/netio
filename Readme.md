@@ -24,6 +24,8 @@ wget -O /usr/local/bin/netio https://bitbucket.org/Svedrin/netio/downloads/netio
 chmod +x /usr/local/bin/netio
 ```
 
+The binaries available for download are 64 bit `--release` builds.
+
 # Usage Examples #
 
 Here's how to use it. Server side:
@@ -59,12 +61,17 @@ Test finished.
 
 # Firewalls #
 
-Netio uses TCP port 55455.
+Netio uses TCP port 55455. The client always connects to the server, and then traffic flows
+in both ways. This way you can easily test your internet connection by running the server
+on an online node and the client on your notebook.
 
 # Building from Source #
 
 ```
 hg clone https://bitbucket.org/Svedrin/netio
 cd netio
-cargo build
+cargo build --release
 ```
+
+Note that the debug build seems to only reach throughput rates around 1.3Gbit/s, so if you're
+going to benchmark a 10GE link, you *need* to build netio with `--release`.
