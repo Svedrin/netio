@@ -77,9 +77,8 @@ fn run_as_client(server_addr: String){
         Ok(stream) => stream,
         Err(err)   => return print_error(String::from("Could not connect to server"), err)
     };
-    match stream.peer_addr() {
-        Ok(addr) => println!("Connected to {:?}.", addr),
-        Err(_)   => ()
+    if let Ok(addr) = stream.peer_addr() {
+        println!("Connected to {:?}.", addr);
     }
     println!();
     match run_benchmark(stream, State::Sender, State::Receiver) {
@@ -156,12 +155,7 @@ fn run_benchmark(mut stream: TcpStream, phase1: State, phase2: State) -> Result<
                     // There may be some data still left in transit, so read() until there's nothing left
                     // and then tell the sender we're done
 
-                    loop {
-                        match stream.read(&mut [0; 16384]) {
-                            Ok(_)  => (),
-                            Err(_) => break
-                        }
-                    }
+                    while let Ok(_) = stream.read(&mut [0; 16384]) {}
 
                     try!(stream.write("done".as_bytes()));
                 }
@@ -176,7 +170,7 @@ fn run_benchmark(mut stream: TcpStream, phase1: State, phase2: State) -> Result<
 
 fn main() {
     let matches = App::new("netio")
-        .version("0.3.1")
+        .version("0.3.2")
         .author("Michael Ziegler <diese-addy@funzt-halt.net>")
         .about("network throughput benchmark")
         .arg(Arg::with_name("server-mode")
