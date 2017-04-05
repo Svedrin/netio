@@ -12,19 +12,26 @@ And because I wanted to take a look at [Rust](rust-lang.org) anyway, I thought I
 # Features #
 
 * Nice tabular output on both client and server side
-* No dependencies
 * IPv6 ready
 * Tests with extremely small packets (like those of an SSH connection when someone's *extremely* good at typing)
-* binaries for Windows and Linux available
+* binaries for Windows and Linux available (64 bit `--release` builds)
 
 # Installation #
+
+## Linux
 
 ```
 wget -O /usr/local/bin/netio https://bitbucket.org/Svedrin/netio/downloads/netio
 chmod +x /usr/local/bin/netio
 ```
 
-The binaries available for download are 64 bit `--release` builds.
+## Windows
+
+Install the [Visual C++ Redistributable for Visual Studio 2015](https://www.microsoft.com/de-de/download/details.aspx?id=48145).
+
+Right-click [this link](https://bitbucket.org/Svedrin/netio/downloads/netio.exe), "save as", store to somewhere easily accessible via `cmd.exe`.
+
+
 
 # Usage Examples #
 
