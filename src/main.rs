@@ -53,9 +53,8 @@ fn run_as_server(once:bool){
     for stream in listener.incoming() {
         match stream {
             Ok(stream) => {
-                match stream.peer_addr() {
-                    Ok(addr) => println!("New connection from {:?}.", addr),
-                    Err(_)   => ()
+                if let Ok(addr) = stream.peer_addr() {
+                    println!("New connection from {:?}.", addr);
                 }
                 println!();
                 match run_benchmark(stream, State::Receiver, State::Sender) {
