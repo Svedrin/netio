@@ -41,13 +41,13 @@ fn print_error(message: String, err: Error){
 }
 
 
-fn run_as_server(once:bool){
-    let listener = match TcpListener::bind(":::55455") {
+fn run_as_server(port: u16, once: bool){
+    let listener = match TcpListener::bind(format!(":::{}", port)) {
         Ok(listener) => listener,
         Err(err)     => return print_error(String::from("Could not start server"), err)
     };
 
-    println!("TCP server listening.");
+    println!("TCP server listening on port {}.", port);
 
     // accept connections and process them, spawning a new thread for each one
     for stream in listener.incoming() {
@@ -71,8 +71,8 @@ fn run_as_server(once:bool){
     }
 }
 
-fn run_as_client(server_addr: String){
-    let stream = match TcpStream::connect((server_addr.as_str(), 55455)) {
+fn run_as_client(server_addr: String, port: u16){
+    let stream = match TcpStream::connect((server_addr.as_str(), port)) {
         Ok(stream) => stream,
         Err(err)   => return print_error(String::from("Could not connect to server"), err)
     };
@@ -180,17 +180,25 @@ fn main() {
             .short("1")
             .long("one-shot")
             .help("Run in server mode, only once"))
+        .arg(Arg::with_name("port")
+            .short("p")
+            .long("port")
+            .takes_value(true)
+            .help("Port number to use [55455]"))
         .arg(Arg::with_name("server-addr")
             .help("the server to connect to (client mode only)")
             .index(1))
         .get_matches();
 
+    let port = matches.value_of("port").unwrap_or("55455").parse::<u16>()
+        .expect("Port argument must be a number between 1 and 65535");
+
     if matches.is_present("server-mode") || matches.is_present("one-shot") {
-        run_as_server(matches.is_present("one-shot"));
+        run_as_server(port, matches.is_present("one-shot"));
     }
     else{
         match matches.value_of("server-addr") {
-            Some(val) => run_as_client(String::from(val)),
+            Some(val) => run_as_client(String::from(val), port),
             None      => println!("Need a server to connect to when running in client mode, see --help")
         }
     }
