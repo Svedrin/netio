@@ -36,47 +36,60 @@ fn print_rate(bytes: u64, time: Duration, label: String){
     println!("SUPERCALIFRAGILISTICEXPIALIDOCIOUS");
 }
 
-fn print_error(message: String, err: Error){
-    println!("\n{}: {}", message, err.to_string());
+
+fn run_as_server(port: u16, once: bool) -> bool {
+    return TcpListener::bind(format!(":::{}", port))
+        .or_else( |err| {
+            println!("Could not start server: {}", err);
+            Err(err)
+        } )
+        .and_then( |listener| {
+            println!("TCP server listening on port {}.", port);
+
+            // accept connections and process them
+            for stream in listener.incoming() {
+                let stream = stream.expect("Could not accept client connection");
+                if let Ok(addr) = stream.peer_addr() {
+                    println!("New connection from {:?}.", addr);
+                }
+                println!();
+                if let Err(err) = run_benchmark(stream, State::Receiver, State::Sender) {
+                    println!("\nBenchmark run aborted: {}", err);
+                }
+                else {
+                    println!("Test finished.");
+                }
+                println!();
+                if once {
+                    break;
+                }
+            }
+            Ok(())
+        })
+        .is_ok();
 }
 
-
-fn run_as_server(port: u16, once: bool){
-    let listener = TcpListener::bind(format!(":::{}", port))
-        .expect("Could not start server");
-
-    println!("TCP server listening on port {}.", port);
-
-    // accept connections and process them, spawning a new thread for each one
-    for stream in listener.incoming() {
-        let stream = stream.expect("Could not accept client connection");
-        if let Ok(addr) = stream.peer_addr() {
-            println!("New connection from {:?}.", addr);
-        }
-        println!();
-        match run_benchmark(stream, State::Receiver, State::Sender) {
-            Ok(_)    => println!("Test finished."),
-            Err(err) => print_error(String::from("Benchmark run aborted"), err)
-        }
-        println!();
-        if once {
-            return;
-        }
-    }
-}
-
-fn run_as_client(server_addr: String, port: u16){
-    let stream = TcpStream::connect((server_addr.as_str(), port))
-        .expect("Could not connect to server");
-    if let Ok(addr) = stream.peer_addr() {
-        println!("Connected to {:?}.", addr);
-    }
-    println!();
-    match run_benchmark(stream, State::Sender, State::Receiver) {
-        Ok(_)    => println!("Test finished."),
-        Err(err) => print_error(String::from("Benchmark run aborted"), err)
-    }
-    println!();
+fn run_as_client(server_addr: String, port: u16) -> bool {
+    return TcpStream::connect((server_addr.as_str(), port))
+        .or_else( |err| {
+            println!("Could not connect to server: {}", err);
+            Err(err)
+        })
+        .and_then( |stream| {
+            if let Ok(addr) = stream.peer_addr() {
+                println!("Connected to {:?}.", addr);
+            }
+            println!();
+            if let Err(err) = run_benchmark(stream, State::Sender, State::Receiver) {
+                println!("\nBenchmark run aborted: {}", err);
+            }
+            else {
+                println!("Test finished.");
+            }
+            println!();
+            Ok(())
+        })
+        .is_ok();
 }
 
 
@@ -189,9 +202,14 @@ fn main() {
         run_as_server(port, matches.is_present("one-shot"));
     }
     else{
-        match matches.value_of("server-addr") {
-            Some(val) => run_as_client(String::from(val), port),
-            None      => println!("Need a server to connect to when running in client mode, see --help")
-        }
+        matches.value_of("server-addr")
+            .and_then( |addr| {
+                Some(run_as_client(String::from(addr), port))
+            })
+            .or_else( || {
+                println!("Need a server to connect to when running in client mode, see --help");
+                None
+            })
+            .is_some();
     }
 }
