@@ -42,40 +42,32 @@ fn print_error(message: String, err: Error){
 
 
 fn run_as_server(port: u16, once: bool){
-    let listener = match TcpListener::bind(format!(":::{}", port)) {
-        Ok(listener) => listener,
-        Err(err)     => return print_error(String::from("Could not start server"), err)
-    };
+    let listener = TcpListener::bind(format!(":::{}", port))
+        .expect("Could not start server");
 
     println!("TCP server listening on port {}.", port);
 
     // accept connections and process them, spawning a new thread for each one
     for stream in listener.incoming() {
-        match stream {
-            Ok(stream) => {
-                if let Ok(addr) = stream.peer_addr() {
-                    println!("New connection from {:?}.", addr);
-                }
-                println!();
-                match run_benchmark(stream, State::Receiver, State::Sender) {
-                    Ok(_)    => println!("Test finished."),
-                    Err(err) => print_error(String::from("Benchmark run aborted"), err)
-                }
-                println!();
-                if once {
-                    return;
-                }
-            }
-            Err(err) => print_error(String::from("Could not accept client connection"), err)
+        let stream = stream.expect("Could not accept client connection");
+        if let Ok(addr) = stream.peer_addr() {
+            println!("New connection from {:?}.", addr);
+        }
+        println!();
+        match run_benchmark(stream, State::Receiver, State::Sender) {
+            Ok(_)    => println!("Test finished."),
+            Err(err) => print_error(String::from("Benchmark run aborted"), err)
+        }
+        println!();
+        if once {
+            return;
         }
     }
 }
 
 fn run_as_client(server_addr: String, port: u16){
-    let stream = match TcpStream::connect((server_addr.as_str(), port)) {
-        Ok(stream) => stream,
-        Err(err)   => return print_error(String::from("Could not connect to server"), err)
-    };
+    let stream = TcpStream::connect((server_addr.as_str(), port))
+        .expect("Could not connect to server");
     if let Ok(addr) = stream.peer_addr() {
         println!("Connected to {:?}.", addr);
     }
