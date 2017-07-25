@@ -171,7 +171,6 @@ fn run_benchmark(mut stream: TcpStream, phase1: State, phase2: State) -> Result<
 }
 
 
-
 fn main() {
     let matches = App::new("netio")
         .version("0.3.2")
