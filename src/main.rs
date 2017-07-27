@@ -1,7 +1,7 @@
 #[deny(warnings)]
 
-extern crate rand;
 extern crate clap;
+extern crate rand;
 
 use std::io::prelude::*;
 use std::io::{Error, ErrorKind};
