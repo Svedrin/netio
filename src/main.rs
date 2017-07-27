@@ -186,7 +186,7 @@ fn main() {
     }
     else{
         if let Err(err) = matches.value_of("server-addr")
-            .ok_or_else( || String::from("Need a server to connect to when running in client mode, see --help") )
+            .ok_or(String::from("Need a server to connect to when running in client mode, see --help"))
             .and_then(|addr| run_as_client(String::from(addr), port))
         {
             println!("{}", err);
