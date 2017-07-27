@@ -34,48 +34,46 @@ fn print_rate(bytes: u64, time: Duration, label: String){
 }
 
 fn run_as_server(port: u16, once: bool) -> Result<(), String> {
-    TcpListener::bind(format!(":::{}", port))
-        .or_else(|err| Err(format!("Could not start server: {}", err)))
-        .and_then( |listener| {
-            println!("TCP server listening on port {}.", port);
+    let listener = TcpListener::bind(format!(":::{}", port))
+        .or_else(|err| Err(format!("Could not start server: {}", err)))?;
 
-            // accept connections and process them
-            for stream in listener.incoming() {
-                let stream = stream.expect("Could not accept client connection");
-                if let Ok(addr) = stream.peer_addr() {
-                    println!("New connection from {:?}.", addr);
-                }
-                println!();
-                if let Err(err) = run_benchmark(stream, State::Receiver, State::Sender) {
-                    println!("\nBenchmark run aborted: {}", err);
-                } else {
-                    println!("Test finished.");
-                }
-                println!();
-                if once {
-                    break;
-                }
-            }
-            Ok(())
-        })
+    println!("TCP server listening on port {}.", port);
+
+    // accept connections and process them
+    for stream in listener.incoming() {
+        let stream = stream.expect("Could not accept client connection");
+        if let Ok(addr) = stream.peer_addr() {
+            println!("New connection from {:?}.", addr);
+        }
+        println!();
+        if let Err(err) = run_benchmark(stream, State::Receiver, State::Sender) {
+            println!("\nBenchmark run aborted: {}", err);
+        } else {
+            println!("\nTest finished.");
+        }
+        println!();
+        if once {
+            break;
+        }
+    }
+    Ok(())
 }
 
 fn run_as_client(server_addr: String, port: u16) -> Result<(), String> {
-    TcpStream::connect((server_addr.as_str(), port))
-        .or_else(|err| Err(format!("Could not connect to server: {}", err)))
-        .and_then( |stream| {
-            if let Ok(addr) = stream.peer_addr() {
-                println!("Connected to {:?}.", addr);
-            }
-            println!();
-            if let Err(err) = run_benchmark(stream, State::Sender, State::Receiver) {
-                println!("\nBenchmark run aborted: {}", err);
-            } else {
-                println!("Test finished.");
-            }
-            println!();
-            Ok(())
-        })
+    let stream = TcpStream::connect((server_addr.as_str(), port))
+        .or_else(|err| Err(format!("Could not connect to server: {}", err)))?;
+
+    if let Ok(addr) = stream.peer_addr() {
+        println!("Connected to {:?}.", addr);
+    }
+    println!();
+    if let Err(err) = run_benchmark(stream, State::Sender, State::Receiver) {
+        println!("\nBenchmark run aborted: {}", err);
+    } else {
+        println!("\nTest finished.");
+    }
+    println!();
+    Ok(())
 }
 
 fn run_benchmark(mut stream: TcpStream, phase1: State, phase2: State) -> Result<(), Error> {
