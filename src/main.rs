@@ -1,24 +1,21 @@
 #[deny(warnings)]
 
+extern crate rand;
+extern crate clap;
+
 use std::io::prelude::*;
 use std::io::{Error, ErrorKind};
 use std::io::stdout;
 use std::net::{TcpListener, TcpStream};
 use std::time::{Duration, Instant};
-
-extern crate rand;
-use rand::Rng;
-
-extern crate clap;
 use clap::{Arg, App};
-
+use rand::Rng;
 
 #[derive(Debug, Clone, Copy)]
 enum State {
     Sender,
     Receiver
 }
-
 
 fn print_rate(bytes: u64, time: Duration, label: String){
     let mut rate: f64 = (bytes as f64) / (time.as_secs() as f64) * 8.0;
@@ -35,7 +32,6 @@ fn print_rate(bytes: u64, time: Duration, label: String){
 
     println!("SUPERCALIFRAGILISTICEXPIALIDOCIOUS");
 }
-
 
 fn run_as_server(port: u16, once: bool) -> bool {
     return TcpListener::bind(format!(":::{}", port))
@@ -91,7 +87,6 @@ fn run_as_client(server_addr: String, port: u16) -> bool {
         })
         .is_ok();
 }
-
 
 fn run_benchmark(mut stream: TcpStream, phase1: State, phase2: State) -> Result<(), Error> {
     let pkt_sizes : [usize; 7] = [32, 64, 1024, 1492, 1500, 2048, 16384];
@@ -169,7 +164,6 @@ fn run_benchmark(mut stream: TcpStream, phase1: State, phase2: State) -> Result<
     }
     return Ok( () )
 }
-
 
 fn main() {
     let matches = App::new("netio")
