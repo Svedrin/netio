@@ -33,12 +33,9 @@ fn print_rate(bytes: u64, time: Duration, label: String){
     println!("SUPERCALIFRAGILISTICEXPIALIDOCIOUS");
 }
 
-fn run_as_server(port: u16, once: bool) -> bool {
-    return TcpListener::bind(format!(":::{}", port))
-        .or_else( |err| {
-            println!("Could not start server: {}", err);
-            Err(err)
-        } )
+fn run_as_server(port: u16, once: bool) -> Result<(), String> {
+    TcpListener::bind(format!(":::{}", port))
+        .or_else(|err| Err(format!("Could not start server: {}", err)))
         .and_then( |listener| {
             println!("TCP server listening on port {}.", port);
 
@@ -51,8 +48,7 @@ fn run_as_server(port: u16, once: bool) -> bool {
                 println!();
                 if let Err(err) = run_benchmark(stream, State::Receiver, State::Sender) {
                     println!("\nBenchmark run aborted: {}", err);
-                }
-                else {
+                } else {
                     println!("Test finished.");
                 }
                 println!();
@@ -62,15 +58,11 @@ fn run_as_server(port: u16, once: bool) -> bool {
             }
             Ok(())
         })
-        .is_ok();
 }
 
-fn run_as_client(server_addr: String, port: u16) -> bool {
-    return TcpStream::connect((server_addr.as_str(), port))
-        .or_else( |err| {
-            println!("Could not connect to server: {}", err);
-            Err(err)
-        })
+fn run_as_client(server_addr: String, port: u16) -> Result<(), String> {
+    TcpStream::connect((server_addr.as_str(), port))
+        .or_else(|err| Err(format!("Could not connect to server: {}", err)))
         .and_then( |stream| {
             if let Ok(addr) = stream.peer_addr() {
                 println!("Connected to {:?}.", addr);
@@ -78,14 +70,12 @@ fn run_as_client(server_addr: String, port: u16) -> bool {
             println!();
             if let Err(err) = run_benchmark(stream, State::Sender, State::Receiver) {
                 println!("\nBenchmark run aborted: {}", err);
-            }
-            else {
+            } else {
                 println!("Test finished.");
             }
             println!();
             Ok(())
         })
-        .is_ok();
 }
 
 fn run_benchmark(mut stream: TcpStream, phase1: State, phase2: State) -> Result<(), Error> {
@@ -192,17 +182,16 @@ fn main() {
         .expect("Port argument must be a number between 1 and 65535");
 
     if matches.is_present("server-mode") || matches.is_present("one-shot") {
-        run_as_server(port, matches.is_present("one-shot"));
+        if let Err(err) = run_as_server(port, matches.is_present("one-shot")) {
+            println!("{}", err);
+        };
     }
     else{
-        matches.value_of("server-addr")
-            .and_then( |addr| {
-                Some(run_as_client(String::from(addr), port))
-            })
-            .or_else( || {
-                println!("Need a server to connect to when running in client mode, see --help");
-                None
-            })
-            .is_some();
+        if let Err(err) = matches.value_of("server-addr")
+            .ok_or_else( || String::from("Need a server to connect to when running in client mode, see --help") )
+            .and_then(|addr| run_as_client(String::from(addr), port))
+        {
+            println!("{}", err);
+        }
     }
 }
