@@ -83,10 +83,10 @@ fn run_benchmark(mut stream: TcpStream, phase1: State, phase2: State) -> Result<
     // Packet size  1k bytes:  2293.17 KByte/s Tx,  2354.97 KByte/s Rx.
 
     for cur_size in pkt_sizes.iter() {
-        try!(stream.set_nodelay(*cur_size < 1000));
+        stream.set_nodelay(*cur_size < 1000)?;
 
         print!("Packet size {:>5} bytes:   ", cur_size);
-        try!(stdout().flush());
+        stdout().flush()?;
 
         for cur_state in [phase1, phase2].iter() {
             let until = Instant::now() + test_duration;
@@ -95,7 +95,7 @@ fn run_benchmark(mut stream: TcpStream, phase1: State, phase2: State) -> Result<
 
             match cur_state {
                 &State::Sender =>  {
-                    try!(stream.set_read_timeout(None));
+                    stream.set_read_timeout(None)?;
 
                     let random_data = rand::thread_rng()
                         .gen_ascii_chars()
@@ -112,17 +112,17 @@ fn run_benchmark(mut stream: TcpStream, phase1: State, phase2: State) -> Result<
                                 }
                             }
                         }
-                        try!(stdout().flush());
+                        stdout().flush()?;
                     }
 
                     print_rate(transferred_data, test_duration, String::from("Tx    "));
-                    try!(stdout().flush());
+                    stdout().flush()?;
 
                     // wait for the "done" response from peer
-                    try!(stream.read(&mut [0; 16384]));
+                    stream.read(&mut [0; 16384])?;
                 },
                 &State::Receiver => {
-                    try!(stream.set_read_timeout(Some(Duration::new(1, 0))));
+                    stream.set_read_timeout(Some(Duration::new(1, 0)))?;
 
                     while Instant::now() < until {
                         match stream.read(&mut [0; 16384]) {
@@ -137,14 +137,14 @@ fn run_benchmark(mut stream: TcpStream, phase1: State, phase2: State) -> Result<
                     }
 
                     print_rate(transferred_data, test_duration, String::from("Rx    "));
-                    try!(stdout().flush());
+                    stdout().flush()?;
 
                     // There may be some data still left in transit, so read() until there's nothing left
                     // and then tell the sender we're done
 
                     while let Ok(_) = stream.read(&mut [0; 16384]) {}
 
-                    try!(stream.write("done".as_bytes()));
+                    stream.write("done".as_bytes())?;
                 }
             }
         }
