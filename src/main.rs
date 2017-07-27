@@ -24,7 +24,7 @@ fn print_rate(bytes: u64, time: Duration, label: String){
 
     for suffix in suffixes.iter() {
         if rate < 1000.0 {
-            print!("{:>8.2} {}Bit/s {}", rate, suffix, label  );
+            print!("{:>8.2} {}Bit/s {}", rate, suffix, label);
             return;
         }
         rate /= 1000.0;
@@ -103,15 +103,16 @@ fn run_benchmark(mut stream: TcpStream, phase1: State, phase2: State) -> Result<
                         .collect::<String>();
 
                     while Instant::now() < until {
-                        match stream.write(random_data.as_bytes()) {
-                            Ok(res)  => transferred_data += res as u64,
-                            Err(err) => {
+                        transferred_data += stream.write(random_data.as_bytes())
+                            .and_then(|res| Ok(res as u64))
+                            .or_else(|err| {
                                 // "Resource temporarily not available" can happen, ignore
-                                if err.kind() != ErrorKind::WouldBlock {
-                                    return Err(err)
+                                if err.kind() == ErrorKind::WouldBlock {
+                                    Ok(0)
+                                } else {
+                                    Err(err)
                                 }
-                            }
-                        }
+                            })?;
                         stdout().flush()?;
                     }
 
@@ -125,15 +126,16 @@ fn run_benchmark(mut stream: TcpStream, phase1: State, phase2: State) -> Result<
                     stream.set_read_timeout(Some(Duration::new(1, 0)))?;
 
                     while Instant::now() < until {
-                        match stream.read(&mut [0; 16384]) {
-                            Ok(res)  => transferred_data += res as u64,
-                            Err(err) => {
+                        transferred_data += stream.read(&mut [0; 16384])
+                            .and_then(|res| Ok(res as u64))
+                            .or_else(|err| {
                                 // "Resource temporarily not available" can happen, ignore
-                                if err.kind() != ErrorKind::WouldBlock {
-                                    return Err(err)
+                                if err.kind() == ErrorKind::WouldBlock {
+                                    Ok(0)
+                                } else {
+                                    Err(err)
                                 }
-                            }
-                        }
+                            })?;
                     }
 
                     print_rate(transferred_data, test_duration, String::from("Rx    "));
