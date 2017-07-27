@@ -139,8 +139,8 @@ fn run_benchmark(mut stream: TcpStream, phase1: State, phase2: State) -> Result<
                     print_rate(transferred_data, test_duration, String::from("Rx    "));
                     stdout().flush()?;
 
-                    // There may be some data still left in transit, so read() until there's nothing left
-                    // and then tell the sender we're done
+                    // There may be some data still left in transit, so read() until there's
+                    // nothing left and then tell the sender we're done
 
                     while let Ok(_) = stream.read(&mut [0; 16384]) {}
 
@@ -186,7 +186,9 @@ fn main() {
     }
     else{
         if let Err(err) = matches.value_of("server-addr")
-            .ok_or(String::from("Need a server to connect to when running in client mode, see --help"))
+            .ok_or(String::from(
+                "Need a server to connect to when running in client mode, see --help"
+            ))
             .and_then(|addr| run_as_client(String::from(addr), port))
         {
             println!("{}", err);
