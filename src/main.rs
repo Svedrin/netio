@@ -35,7 +35,7 @@ fn print_rate(bytes: u64, time: Duration, label: String){
 
 fn run_as_server(port: u16, once: bool) -> Result<(), String> {
     let listener = TcpListener::bind(format!(":::{}", port))
-        .or_else(|err| Err(format!("Could not start server: {}", err)))?;
+        .map_err(|err| format!("Could not start server: {}", err))?;
 
     println!("TCP server listening on port {}.", port);
 
@@ -61,7 +61,7 @@ fn run_as_server(port: u16, once: bool) -> Result<(), String> {
 
 fn run_as_client(server_addr: String, port: u16) -> Result<(), String> {
     let stream = TcpStream::connect((server_addr.as_str(), port))
-        .or_else(|err| Err(format!("Could not connect to server: {}", err)))?;
+        .map_err(|err| format!("Could not connect to server: {}", err))?;
 
     if let Ok(addr) = stream.peer_addr() {
         println!("Connected to {:?}.", addr);
