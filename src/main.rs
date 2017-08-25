@@ -1,5 +1,3 @@
-#[deny(warnings)]
-
 extern crate clap;
 extern crate rand;
 
@@ -17,12 +15,12 @@ enum State {
     Receiver
 }
 
-fn print_rate(bytes: u64, time: Duration, label: String){
+fn print_rate(bytes: u64, time: Duration, label: &str){
     let mut rate: f64 = (bytes as f64) / (time.as_secs() as f64) * 8.0;
 
     let suffixes = [ "", "k", "M", "G", "T", "P", "E", "Z", "Y" ];
 
-    for suffix in suffixes.iter() {
+    for suffix in &suffixes {
         if rate < 1000.0 {
             print!("{:>8.2} {}Bit/s {}", rate, suffix, label);
             return;
@@ -59,8 +57,8 @@ fn run_as_server(port: u16, once: bool) -> Result<(), String> {
     Ok(())
 }
 
-fn run_as_client(server_addr: String, port: u16) -> Result<(), String> {
-    let stream = TcpStream::connect((server_addr.as_str(), port))
+fn run_as_client(server_addr: &str, port: u16) -> Result<(), String> {
+    let stream = TcpStream::connect((server_addr, port))
         .map_err(|err| format!("Could not connect to server: {}", err))?;
 
     if let Ok(addr) = stream.peer_addr() {
@@ -77,24 +75,24 @@ fn run_as_client(server_addr: String, port: u16) -> Result<(), String> {
 }
 
 fn run_benchmark(mut stream: TcpStream, phase1: State, phase2: State) -> Result<(), Error> {
-    let pkt_sizes : [usize; 7] = [32, 64, 1024, 1492, 1500, 2048, 16384];
+    let pkt_sizes : [usize; 7] = [32, 64, 1024, 1492, 1500, 2048, 16_384];
     let test_duration = Duration::new(5, 0);
 
     // Packet size  1k bytes:  2293.17 KByte/s Tx,  2354.97 KByte/s Rx.
 
-    for cur_size in pkt_sizes.iter() {
+    for cur_size in &pkt_sizes {
         stream.set_nodelay(*cur_size < 1000)?;
 
         print!("Packet size {:>5} bytes:   ", cur_size);
         stdout().flush()?;
 
-        for cur_state in [phase1, phase2].iter() {
+        for cur_state in &[phase1, phase2] {
             let until = Instant::now() + test_duration;
 
             let mut transferred_data:u64 = 0;
 
-            match cur_state {
-                &State::Sender =>  {
+            match *cur_state {
+                State::Sender =>  {
                     stream.set_read_timeout(None)?;
 
                     let random_data = rand::thread_rng()
@@ -116,17 +114,17 @@ fn run_benchmark(mut stream: TcpStream, phase1: State, phase2: State) -> Result<
                         stdout().flush()?;
                     }
 
-                    print_rate(transferred_data, test_duration, String::from("Tx    "));
+                    print_rate(transferred_data, test_duration, "Tx    ");
                     stdout().flush()?;
 
                     // wait for the "done" response from peer
-                    stream.read(&mut [0; 16384])?;
+                    stream.read(&mut [0; 16_384])?;
                 },
-                &State::Receiver => {
+                State::Receiver => {
                     stream.set_read_timeout(Some(Duration::new(1, 0)))?;
 
                     while Instant::now() < until {
-                        transferred_data += stream.read(&mut [0; 16384])
+                        transferred_data += stream.read(&mut [0; 16_384])
                             .and_then(|res| Ok(res as u64))
                             .or_else(|err| {
                                 // "Resource temporarily not available" can happen, ignore
@@ -138,21 +136,21 @@ fn run_benchmark(mut stream: TcpStream, phase1: State, phase2: State) -> Result<
                             })?;
                     }
 
-                    print_rate(transferred_data, test_duration, String::from("Rx    "));
+                    print_rate(transferred_data, test_duration, "Rx    ");
                     stdout().flush()?;
 
                     // There may be some data still left in transit, so read() until there's
                     // nothing left and then tell the sender we're done
 
-                    while let Ok(_) = stream.read(&mut [0; 16384]) {}
+                    while let Ok(_) = stream.read(&mut [0; 16_384]) {}
 
-                    stream.write("done".as_bytes())?;
+                    stream.write(b"done")?;
                 }
             }
         }
         println!();
     }
-    return Ok( () )
+    Ok(())
 }
 
 fn main() {
@@ -186,14 +184,12 @@ fn main() {
             println!("{}", err);
         };
     }
-    else{
-        if let Err(err) = matches.value_of("server-addr")
-            .ok_or(String::from(
-                "Need a server to connect to when running in client mode, see --help"
-            ))
-            .and_then(|addr| run_as_client(String::from(addr), port))
-        {
-            println!("{}", err);
-        }
+    else if let Err(err) = matches.value_of("server-addr")
+        .ok_or_else(|| String::from(
+            "Need a server to connect to when running in client mode, see --help"
+        ))
+        .and_then(|addr| run_as_client(addr, port))
+    {
+        println!("{}", err);
     }
 }
