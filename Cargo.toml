@@ -6,3 +6,4 @@ authors = ["Michael Ziegler <diese-addy@funzt-halt.net>"]
 [dependencies]
 clap = "*"
 rand = "*"
+error-chain = "*"

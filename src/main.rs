@@ -1,13 +1,23 @@
+#![recursion_limit = "1024"]
+
 extern crate clap;
+#[macro_use]
+extern crate error_chain;
 extern crate rand;
 
 use std::io::prelude::*;
-use std::io::{Error, ErrorKind};
+use std::io::ErrorKind;
 use std::io::stdout;
 use std::net::{TcpListener, TcpStream};
 use std::time::{Duration, Instant};
 use clap::{Arg, App};
 use rand::Rng;
+
+mod errors {
+    error_chain! { }
+}
+
+use errors::*;
 
 #[derive(Debug, Clone, Copy)]
 enum State {
@@ -31,9 +41,9 @@ fn print_rate(bytes: u64, time: Duration, label: &str){
     println!("SUPERCALIFRAGILISTICEXPIALIDOCIOUS");
 }
 
-fn run_as_server(port: u16, once: bool) -> Result<(), String> {
+fn run_as_server(port: u16, once: bool) -> Result<()> {
     let listener = TcpListener::bind(format!(":::{}", port))
-        .map_err(|err| format!("Could not start server: {}", err))?;
+        .chain_err(|| "Could not start server")?;
 
     println!("TCP server listening on port {}.", port);
 
@@ -57,9 +67,9 @@ fn run_as_server(port: u16, once: bool) -> Result<(), String> {
     Ok(())
 }
 
-fn run_as_client(server_addr: &str, port: u16) -> Result<(), String> {
+fn run_as_client(server_addr: &str, port: u16) -> Result<()> {
     let stream = TcpStream::connect((server_addr, port))
-        .map_err(|err| format!("Could not connect to server: {}", err))?;
+        .chain_err(|| "Could not connect to server")?;
 
     if let Ok(addr) = stream.peer_addr() {
         println!("Connected to {:?}.", addr);
@@ -74,17 +84,19 @@ fn run_as_client(server_addr: &str, port: u16) -> Result<(), String> {
     Ok(())
 }
 
-fn run_benchmark(mut stream: TcpStream, phase1: State, phase2: State) -> Result<(), Error> {
+fn run_benchmark(mut stream: TcpStream, phase1: State, phase2: State) -> Result<()> {
     let pkt_sizes : [usize; 7] = [32, 64, 1024, 1492, 1500, 2048, 16_384];
     let test_duration = Duration::new(5, 0);
 
     // Packet size  1k bytes:  2293.17 KByte/s Tx,  2354.97 KByte/s Rx.
 
     for cur_size in &pkt_sizes {
-        stream.set_nodelay(*cur_size < 1000)?;
+        stream.set_nodelay(*cur_size < 1000)
+            .chain_err(|| "Could not set TCP NoDelay option")?;
 
         print!("Packet size {:>5} bytes:   ", cur_size);
-        stdout().flush()?;
+        stdout().flush()
+            .chain_err(|| "Could not flush")?;
 
         for cur_state in &[phase1, phase2] {
             let until = Instant::now() + test_duration;
@@ -93,7 +105,8 @@ fn run_benchmark(mut stream: TcpStream, phase1: State, phase2: State) -> Result<
 
             match *cur_state {
                 State::Sender =>  {
-                    stream.set_read_timeout(None)?;
+                    stream.set_read_timeout(None)
+                        .chain_err(|| "Could not disable read timeout")?;
 
                     let random_data = rand::thread_rng()
                         .gen_ascii_chars()
@@ -110,18 +123,23 @@ fn run_benchmark(mut stream: TcpStream, phase1: State, phase2: State) -> Result<
                                 } else {
                                     Err(err)
                                 }
-                            })?;
-                        stdout().flush()?;
+                            })
+                            .chain_err(|| "Could not send data")?;
+                        stdout().flush()
+                            .chain_err(|| "Could not flush stdout")?;
                     }
 
                     print_rate(transferred_data, test_duration, "Tx    ");
-                    stdout().flush()?;
+                    stdout().flush()
+                        .chain_err(|| "Could not flush")?;
 
                     // wait for the "done" response from peer
-                    stream.read(&mut [0; 16_384])?;
+                    stream.read(&mut [0; 16_384])
+                        .chain_err(|| "Could not read \"done\" response")?;
                 },
                 State::Receiver => {
-                    stream.set_read_timeout(Some(Duration::new(1, 0)))?;
+                    stream.set_read_timeout(Some(Duration::new(1, 0)))
+                        .chain_err(|| "Could not enable read timeout")?;
 
                     while Instant::now() < until {
                         transferred_data += stream.read(&mut [0; 16_384])
@@ -133,24 +151,43 @@ fn run_benchmark(mut stream: TcpStream, phase1: State, phase2: State) -> Result<
                                 } else {
                                     Err(err)
                                 }
-                            })?;
+                            })
+                            .chain_err(|| "Could not receive data")?;
                     }
 
                     print_rate(transferred_data, test_duration, "Rx    ");
-                    stdout().flush()?;
+                    stdout().flush()
+                        .chain_err(|| "Could not flush stdout")?;
 
                     // There may be some data still left in transit, so read() until there's
                     // nothing left and then tell the sender we're done
 
                     while let Ok(_) = stream.read(&mut [0; 16_384]) {}
 
-                    stream.write(b"done")?;
+                    stream.write(b"done")
+                        .chain_err(|| "Could not send \"done\" response")?;
                 }
             }
         }
         println!();
     }
     Ok(())
+}
+
+fn run(matches: clap::ArgMatches) -> Result<()> {
+    let port = matches.value_of("port").unwrap_or("55455").parse::<u16>()
+        .chain_err(|| "Port argument must be a number between 1 and 65535")?;
+
+    if matches.is_present("server-mode") || matches.is_present("one-shot") {
+        run_as_server(port, matches.is_present("one-shot"))
+    }
+    else {
+        run_as_client(
+            matches.value_of("server-addr")
+                .ok_or("Need a server to connect to when running in client mode, see --help")?,
+            port
+        )
+    }
 }
 
 fn main() {
@@ -176,20 +213,17 @@ fn main() {
             .index(1))
         .get_matches();
 
-    let port = matches.value_of("port").unwrap_or("55455").parse::<u16>()
-        .expect("Port argument must be a number between 1 and 65535");
+    if let Err(ref e) = run(matches) {
+        eprintln!("error: {}", e);
 
-    if matches.is_present("server-mode") || matches.is_present("one-shot") {
-        if let Err(err) = run_as_server(port, matches.is_present("one-shot")) {
-            println!("{}", err);
-        };
-    }
-    else if let Err(err) = matches.value_of("server-addr")
-        .ok_or_else(|| String::from(
-            "Need a server to connect to when running in client mode, see --help"
-        ))
-        .and_then(|addr| run_as_client(addr, port))
-    {
-        println!("{}", err);
+        for e in e.iter().skip(1) {
+            eprintln!("caused by: {}", e);
+        }
+
+        if let Some(backtrace) = e.backtrace() {
+            eprintln!("backtrace: {:?}", backtrace);
+        }
+
+        ::std::process::exit(1);
     }
 }
