@@ -1,4 +1,4 @@
-image: atlassianlabs/buildpack-deps-rust
+image: rustlang/rust:stable
 
 pipelines:
   default:
