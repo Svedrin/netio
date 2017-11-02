@@ -4,6 +4,4 @@ pipelines:
   default:
     - step:
         script:
-          - echo "Updates to rustup"                ; rustup self update
-          - echo "Update Rust toolchain"            ; rustup update
           - echo "Build project"                    ; cargo build --release
