@@ -1,4 +1,4 @@
-image: rustlang/rust:stable
+image: rust:1.19.0
 
 pipelines:
   default:
