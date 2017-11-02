@@ -4,4 +4,4 @@ pipelines:
   default:
     - step:
         script:
-          - echo "Build project"                    ; cargo build --release
+          - cargo build --release
