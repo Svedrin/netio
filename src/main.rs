@@ -191,8 +191,8 @@ fn run(matches: clap::ArgMatches) -> Result<()> {
 }
 
 fn main() {
-    let matches = App::new("netio")
-        .version("0.3.2")
+    let matches = App::new(env!("CARGO_PKG_NAME"))
+        .version(env!("CARGO_PKG_VERSION"))
         .author("Michael Ziegler <diese-addy@funzt-halt.net>")
         .about("network throughput benchmark")
         .arg(Arg::with_name("server-mode")
