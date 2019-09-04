@@ -21,15 +21,14 @@ And because I wanted to take a look at [Rust](rust-lang.org) anyway, I thought I
 ## Linux
 
 ```
-wget -O /usr/local/bin/netio https://bitbucket.org/Svedrin/netio/downloads/netio
-chmod +x /usr/local/bin/netio
+wget -O /usr/local/bin/netio https://github.com/Svedrin/netio/releases/download/v0.3.2/netio && chmod +x /usr/local/bin/netio
 ```
 
 ## Windows
 
 Install the [Visual C++ Redistributable for Visual Studio 2015](https://www.microsoft.com/de-de/download/details.aspx?id=48145).
 
-Right-click [this link](https://bitbucket.org/Svedrin/netio/downloads/netio.exe), "save as", store to somewhere easily accessible via `cmd.exe`.
+The download for the Windows build is currently unavailable.
 
 
 
