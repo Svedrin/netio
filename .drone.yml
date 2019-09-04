@@ -6,3 +6,15 @@ steps:
   image: rust:1.19.0
   commands:
   - cargo build --release
+
+- name: publish
+  image: plugins/github-release
+  settings:
+    api_key:
+      from_secret: github-token
+    files: target/release/netio
+    checksum:
+      - sha256
+  when:
+    branch:
+    - master
