@@ -1,6 +1,6 @@
 # README #
 
-Rust clone of [Kai Uwe Rommels' NETIO Benchmark](http://www.ars.de/ars/ars.nsf/docs/netio) that I've always greatly enjoyed using, but
+Rust clone of [Kai Uwe Rommels' NETIO Benchmark](https://web.ars.de/netio/) that I've always greatly enjoyed using, but
 that (imho) has a couple downsides:
 
 *   It was Not Invented Here (obviously)
