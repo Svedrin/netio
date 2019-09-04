@@ -16,5 +16,4 @@ steps:
     checksum:
       - sha256
   when:
-    branch:
-    - master
+    event: tag
