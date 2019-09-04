@@ -7,7 +7,7 @@ that (imho) has a couple downsides:
 *   The server side output differs from the client side and is far less readable
 *   The license prevents it from ever hitting any repos (and Kai does not provide his own)
 
-And because I wanted to take a look at [Rust](rust-lang.org) anyway, I thought I'd go ahead and write a clone for fun and great justice.
+And because I wanted to take a look at [Rust](http://rust-lang.org) anyway, I thought I'd go ahead and write a clone for fun and great justice.
 
 # Features #
 
