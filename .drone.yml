@@ -2,8 +2,8 @@ kind: pipeline
 name: default
 
 steps:
-- name: cargo build
-  image: rust:1.19.0
+- name: build for Linux
+  image: rust:latest
   commands:
   - cargo build --release
 
