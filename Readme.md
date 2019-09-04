@@ -75,7 +75,7 @@ on an online node and the client on your notebook.
 # Building from Source #
 
 ```
-hg clone https://bitbucket.org/Svedrin/netio
+git clone https://github.com/Svedrin/netio.git
 cd netio
 cargo build --release
 ```

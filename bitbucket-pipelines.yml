@@ -1,7 +1,0 @@
-image: rust:1.19.0
-
-pipelines:
-  default:
-    - step:
-        script:
-          - cargo build --release

@@ -1,0 +1,8 @@
+kind: pipeline
+name: default
+
+steps:
+- name: config check
+  image: rust:1.19.0
+  commands:
+  - cargo build --release
