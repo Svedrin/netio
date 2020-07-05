@@ -1,3 +1,4 @@
+---
 kind: pipeline
 name: default
 
@@ -8,7 +9,7 @@ steps:
   - cargo build --release
 
 - name: build for Windows
-  image: rust:1.37.0-stretch
+  image: rust:slim
   commands:
   - apt-get update
   - apt-get install -y gcc-mingw-w64-x86-64 g++-mingw-w64-x86-64
@@ -27,3 +28,8 @@ steps:
       - sha256
   when:
     event: tag
+---
+kind: signature
+hmac: d42fcf6b20b64df00975ce52c43f014ef2f31aa42826ef809c1bcfdcd3b14917
+
+...
