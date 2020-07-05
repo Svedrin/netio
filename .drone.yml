@@ -3,12 +3,23 @@ kind: pipeline
 name: default
 
 steps:
+- name: set version in Cargo.toml
+  image: rust:slim
+  commands:
+  - echo "Setting Cargo.toml to version $DRONE_TAG:"
+  - sed -i -e "s/99\.99\.9/$(tr -d 'v' <<<$DRONE_TAG)/" Cargo.toml
+  - cat Cargo.toml
+  when:
+    event: tag
+
 - name: build for x86_64
   image: rust:slim
   commands:
   - apt-get update
   - apt-get install -y make
   - cargo build --release
+  depends_on:
+  - "set version in Cargo.toml"
 
 - name: build for armv7l
   image: rust:slim
@@ -17,6 +28,8 @@ steps:
   - apt-get install -y make gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf
   - rustup target add armv7-unknown-linux-gnueabihf
   - cargo build --release --target armv7-unknown-linux-gnueabihf
+  depends_on:
+  - "set version in Cargo.toml"
 
 - name: build for Windows
   image: rust:slim
@@ -25,6 +38,8 @@ steps:
   - apt-get install -y gcc-mingw-w64-x86-64 g++-mingw-w64-x86-64
   - rustup target add x86_64-pc-windows-gnu
   - cargo build --release --target x86_64-pc-windows-gnu
+  depends_on:
+  - "set version in Cargo.toml"
 
 - name: prepare release
   image: rust:slim
@@ -57,6 +72,6 @@ steps:
     event: tag
 ---
 kind: signature
-hmac: 7baef810d31be3c044dd529f05bb49d4198a09f98876465ceef90e7b8ad77237
+hmac: 4d1caad9bf9d879530205f4ec191d5a1e289f7c999382995ca0c85c136864f23
 
 ...
