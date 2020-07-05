@@ -7,7 +7,7 @@ steps:
   image: rust:slim
   commands:
   - echo "Setting Cargo.toml to version $DRONE_TAG:"
-  - sed -i -e "s/99\.99\.9/$(tr -d 'v' <<<$DRONE_TAG)/" Cargo.toml
+  - sed -i -e "s/99\.99\.9/$(echo $DRONE_TAG | tr -d 'v')/" Cargo.toml
   - cat Cargo.toml
   when:
     event: tag
@@ -72,6 +72,6 @@ steps:
     event: tag
 ---
 kind: signature
-hmac: 4d1caad9bf9d879530205f4ec191d5a1e289f7c999382995ca0c85c136864f23
+hmac: 7668e9aaf0495b4f6ea050242fb641e20cfeacc6b27cf9c92ca926aca6091e4b
 
 ...
