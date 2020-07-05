@@ -3,10 +3,20 @@ kind: pipeline
 name: default
 
 steps:
-- name: build for Linux
-  image: rust:latest
+- name: build for x86_64
+  image: rust:slim
   commands:
+  - apt-get update
+  - apt-get install -y make
   - cargo build --release
+
+- name: build for armv7l
+  image: rust:slim
+  commands:
+  - apt-get update
+  - apt-get install -y make gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf
+  - rustup target add armv7-unknown-linux-gnueabihf
+  - cargo build --release --target armv7-unknown-linux-gnueabihf
 
 - name: build for Windows
   image: rust:slim
@@ -16,20 +26,37 @@ steps:
   - rustup target add x86_64-pc-windows-gnu
   - cargo build --release --target x86_64-pc-windows-gnu
 
+- name: prepare release
+  image: rust:slim
+  commands:
+  - mkdir target/_release
+  - cp target/release/netio                               target/_release/netio-x86_64
+  - cp target/armv7-unknown-linux-gnueabihf/release/netio target/_release/netio-armv7l
+  - cp target/x86_64-pc-windows-gnu/release/netio.exe     target/_release/netio.exe
+  depends_on:
+  - "build for x86_64"
+  - "build for armv7l"
+  - "build for Windows"
+  when:
+    event: tag
+
 - name: publish
   image: plugins/github-release
   settings:
     api_key:
       from_secret: github-token
     files:
-      - target/release/netio
-      - target/x86_64-pc-windows-gnu/release/netio.exe
+      - target/_release/netio-x86_64
+      - target/_release/netio-armv7l
+      - target/_release/netio.exe
     checksum:
       - sha256
+  depends_on:
+  - "prepare release"
   when:
     event: tag
 ---
 kind: signature
-hmac: d42fcf6b20b64df00975ce52c43f014ef2f31aa42826ef809c1bcfdcd3b14917
+hmac: 7baef810d31be3c044dd529f05bb49d4198a09f98876465ceef90e7b8ad77237
 
 ...
