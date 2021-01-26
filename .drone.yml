@@ -13,7 +13,7 @@ steps:
     event: tag
 
 - name: build for x86_64
-  image: rust:slim
+  image: rust:alpine
   commands:
   - apt-get update
   - apt-get install -y make
@@ -72,6 +72,6 @@ steps:
     event: tag
 ---
 kind: signature
-hmac: 7668e9aaf0495b4f6ea050242fb641e20cfeacc6b27cf9c92ca926aca6091e4b
+hmac: e2f9a070a4de126433fdb2f2d7a95a29362c6bdea26d0994164b08a605e50c6d
 
 ...
