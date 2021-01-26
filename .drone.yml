@@ -15,8 +15,7 @@ steps:
 - name: build for x86_64
   image: rust:alpine
   commands:
-  - apt-get update
-  - apt-get install -y make
+  - apk add --no-cache make gcc g++
   - cargo build --release
   depends_on:
   - "set version in Cargo.toml"
@@ -72,6 +71,6 @@ steps:
     event: tag
 ---
 kind: signature
-hmac: e2f9a070a4de126433fdb2f2d7a95a29362c6bdea26d0994164b08a605e50c6d
+hmac: 9da0b47af204c93c633b04f8891647ac4eaa746dde62fec3a82bf119cc7ca115
 
 ...
