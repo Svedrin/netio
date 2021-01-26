@@ -21,7 +21,7 @@ And because I wanted to take a look at [Rust](http://rust-lang.org) anyway, I th
 ## Linux
 
 ```
-wget -O /usr/local/bin/netio https://github.com/Svedrin/netio/releases/download/v0.3.3/netio && chmod +x /usr/local/bin/netio
+wget -O /usr/local/bin/netio https://github.com/Svedrin/netio/releases/latest/download/netio-x86_64 && chmod +x /usr/local/bin/netio
 ```
 
 ## Windows
