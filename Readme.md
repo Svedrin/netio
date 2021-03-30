@@ -28,7 +28,7 @@ wget -O /usr/local/bin/netio https://github.com/Svedrin/netio/releases/latest/do
 
 Install the [Visual C++ Redistributable for Visual Studio 2015](https://www.microsoft.com/de-de/download/details.aspx?id=48145).
 
-Right-click [this link](https://github.com/Svedrin/netio/releases/download/v0.3.3/netio.exe), "save as", store to somewhere easily accessible via `cmd.exe`.
+Right-click [this link](https://github.com/Svedrin/netio/releases/latest/download/netio.exe), "save as", store to somewhere easily accessible via `cmd.exe`.
 
 
 
