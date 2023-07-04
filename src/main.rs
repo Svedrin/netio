@@ -55,7 +55,8 @@ fn run_as_server(port: u16, once: bool) -> Result<()> {
         }
         println!();
         if let Err(err) = run_benchmark(stream, State::Receiver, State::Sender) {
-            println!("\nBenchmark run aborted: {}", err);
+            println!("\n");
+            return Err(err).chain_err(|| "Benchmark run aborted");
         } else {
             println!("\nTest finished.");
         }
@@ -76,7 +77,8 @@ fn run_as_client(server_addr: &str, port: u16) -> Result<()> {
     }
     println!();
     if let Err(err) = run_benchmark(stream, State::Sender, State::Receiver) {
-        println!("\nBenchmark run aborted: {}", err);
+        println!("\n");
+        return Err(err).chain_err(|| "Benchmark run aborted");
     } else {
         println!("\nTest finished.");
     }
