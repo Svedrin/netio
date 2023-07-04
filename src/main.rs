@@ -110,7 +110,7 @@ fn run_benchmark(mut stream: TcpStream, phase1: State, phase2: State) -> Result<
                     stream.set_read_timeout(None)
                         .chain_err(|| "Could not disable read timeout")?;
 
-                    let mut random_data = Vec::with_capacity(cur_size);
+                    let mut random_data = vec![0; 16_384];
                     rand::thread_rng().fill_bytes(&mut random_data);
 
                     while Instant::now() < until {
