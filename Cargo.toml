@@ -4,6 +4,6 @@ version = "99.99.9"
 authors = ["Michael Ziegler <diese-addy@funzt-halt.net>"]
 
 [dependencies]
-clap = "*"
+clap = "3"
 rand = "*"
 error-chain = "*"

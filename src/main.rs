@@ -11,7 +11,7 @@ use std::io::stdout;
 use std::net::{TcpListener, TcpStream};
 use std::time::{Duration, Instant};
 use clap::{Arg, App};
-use rand::Rng;
+use rand::RngCore;
 
 mod errors {
     error_chain! { }
@@ -92,8 +92,8 @@ fn run_benchmark(mut stream: TcpStream, phase1: State, phase2: State) -> Result<
 
     // Packet size  1k bytes:  2293.17 KByte/s Tx,  2354.97 KByte/s Rx.
 
-    for cur_size in &pkt_sizes {
-        stream.set_nodelay(*cur_size < 1000)
+    for cur_size in pkt_sizes {
+        stream.set_nodelay(cur_size < 1000)
             .chain_err(|| "Could not set TCP NoDelay option")?;
 
         print!("Packet size {:>5} bytes:   ", cur_size);
@@ -110,13 +110,11 @@ fn run_benchmark(mut stream: TcpStream, phase1: State, phase2: State) -> Result<
                     stream.set_read_timeout(None)
                         .chain_err(|| "Could not disable read timeout")?;
 
-                    let random_data = rand::thread_rng()
-                        .gen_ascii_chars()
-                        .take(*cur_size)
-                        .collect::<String>();
+                    let mut random_data = Vec::with_capacity(cur_size);
+                    rand::thread_rng().fill_bytes(&mut random_data);
 
                     while Instant::now() < until {
-                        transferred_data += stream.write(random_data.as_bytes())
+                        transferred_data += stream.write(&random_data[..cur_size])
                             .and_then(|res| Ok(res as u64))
                             .or_else(|err| {
                                 // "Resource temporarily not available" can happen, ignore
@@ -198,15 +196,15 @@ fn main() {
         .author("Michael Ziegler <diese-addy@funzt-halt.net>")
         .about("network throughput benchmark")
         .arg(Arg::with_name("server-mode")
-            .short("s")
+            .short('s')
             .long("server")
             .help("Run in server mode"))
         .arg(Arg::with_name("one-shot")
-            .short("1")
+            .short('1')
             .long("one-shot")
             .help("Run in server mode, only once"))
         .arg(Arg::with_name("port")
-            .short("p")
+            .short('p')
             .long("port")
             .takes_value(true)
             .help("Port number to use [55455]"))
