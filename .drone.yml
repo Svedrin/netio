@@ -17,8 +17,6 @@ steps:
   commands:
   - apk add --no-cache make gcc g++
   - cargo build --release
-  depends_on:
-  - "set version in Cargo.toml"
 
 - name: build for armv7l
   image: rust:slim
@@ -27,8 +25,6 @@ steps:
   - apt-get install -y make gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf
   - rustup target add armv7-unknown-linux-gnueabihf
   - cargo build --release --target armv7-unknown-linux-gnueabihf
-  depends_on:
-  - "set version in Cargo.toml"
 
 - name: build for Windows
   image: rust:slim
@@ -37,8 +33,6 @@ steps:
   - apt-get install -y gcc-mingw-w64-x86-64 g++-mingw-w64-x86-64
   - rustup target add x86_64-pc-windows-gnu
   - cargo build --release --target x86_64-pc-windows-gnu
-  depends_on:
-  - "set version in Cargo.toml"
 
 - name: prepare release
   image: rust:slim
@@ -47,10 +41,6 @@ steps:
   - cp target/release/netio                               target/_release/netio-x86_64
   - cp target/armv7-unknown-linux-gnueabihf/release/netio target/_release/netio-armv7l
   - cp target/x86_64-pc-windows-gnu/release/netio.exe     target/_release/netio.exe
-  depends_on:
-  - "build for x86_64"
-  - "build for armv7l"
-  - "build for Windows"
   when:
     event: tag
 
@@ -65,8 +55,6 @@ steps:
       - target/_release/netio.exe
     checksum:
       - sha256
-  depends_on:
-  - "prepare release"
   when:
     event: tag
 ---
