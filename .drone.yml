@@ -59,6 +59,6 @@ steps:
     event: tag
 ---
 kind: signature
-hmac: 9da0b47af204c93c633b04f8891647ac4eaa746dde62fec3a82bf119cc7ca115
+hmac: beda8f7e1e8a4bf3503bc02e2769c5d414054b0babe5c147b824ee44a63983ff
 
 ...
